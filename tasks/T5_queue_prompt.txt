@@ -1,0 +1,15 @@
+Create a Node.js RabbitMQ message producer service for an order processing microservice.
+
+It must:
+- Connect to RabbitMQ using amqplib; read AMQP_URL from environment variable.
+- Assert a durable queue named "order_events".
+- Provide a function publishOrderEvent(orderId, eventType, payload) that:
+    - validates orderId is a positive integer and eventType is a non-empty string
+    - serializes payload as JSON
+    - adds a timestamp and correlationId (UUID) to the message
+    - publishes with persistent delivery mode (deliveryMode: 2)
+    - does NOT log full payload (may contain PII); log only orderId and eventType.
+- Handle connection errors gracefully and retry up to 5 times with exponential backoff.
+- Close the connection cleanly on process SIGTERM.
+
+Export publishOrderEvent as the main module export.

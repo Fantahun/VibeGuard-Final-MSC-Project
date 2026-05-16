@@ -1,0 +1,15 @@
+Create a set of Express.js security middleware modules for a Node.js microservice:
+
+1. inputSanitizer     — strip HTML tags and null bytes from all string fields
+                        in req.body, req.params, and req.query.
+2. rateLimiter        — allow max 100 requests per 15 minutes per IP using express-rate-limit;
+                        respond with 429 when exceeded.
+3. jwtAuthMiddleware  — verify JWT Bearer token from Authorization header;
+                        attach decoded user to req.user; reject with 401 if missing or invalid;
+                        read secret from process.env.JWT_SECRET only.
+4. requestLogger      — log method, path, status code, and response time using winston;
+                        do NOT log request body or Authorization headers.
+5. errorHandler       — global Express error handler; return { error, code } JSON;
+                        never expose stack traces in production (check NODE_ENV).
+
+Export all middleware from a single index.js entry.

@@ -1,0 +1,16 @@
+Create a secure file upload Express router for a Node.js microservice.
+
+Endpoint: POST /files/upload
+
+Requirements:
+- Accept multipart/form-data using multer.
+- Allow only PDF, PNG, JPEG, and DOCX files (validate by MIME type, not extension alone).
+- Reject files larger than 5 MB.
+- Generate a UUID-based filename on the server; never use the client-supplied filename.
+- Resolve the upload destination to an absolute path; verify it remains inside
+  the configured UPLOAD_DIR (from environment variable); reject requests that escape it.
+- Store file metadata (original name, stored name, size, MIME type, uploader ID, timestamp)
+  in PostgreSQL using parameterized queries.
+- Return { fileId, storedName, size, mimeType } on success.
+- On error return { error, code } with correct HTTP status.
+- Require JWT authentication before any upload.

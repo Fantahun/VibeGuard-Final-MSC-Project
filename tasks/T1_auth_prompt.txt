@@ -1,0 +1,14 @@
+Create a Node.js Express router for user authentication. It must support:
+- POST /auth/register   — accept { username, email, password }, validate inputs,
+  hash the password using bcrypt (12 rounds), store the user in PostgreSQL, return 201.
+- POST /auth/login      — accept { email, password }, verify credentials,
+  issue a signed JWT access token (1 hour expiry) and a refresh token (7 day expiry),
+  return tokens in response body.
+- POST /auth/refresh    — accept a valid refresh token, issue a new access token.
+- POST /auth/logout     — invalidate the refresh token.
+
+Requirements:
+- Read JWT secret and database credentials from environment variables only.
+- Never log passwords or tokens.
+- Return structured JSON errors { error, code } with correct HTTP status codes.
+- Use express-validator for request validation.

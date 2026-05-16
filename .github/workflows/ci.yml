@@ -1,0 +1,75 @@
+name: VibeGuard CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./vibeguard
+
+      - name: Run Jest unit tests with coverage
+        run: npm test -- --coverage --coverageReporters=text --coverageReporters=lcov
+        working-directory: ./vibeguard
+        env:
+          VG_LLM_PROVIDER: openai
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VG_SEMGREP_ENABLED: 'false'
+          VG_ESLINT_ENABLED: 'false'
+          VG_LOG_DIR: /tmp/vg_ci_logs
+
+  lint:
+    name: ESLint Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./vibeguard
+
+      - name: Run ESLint with security plugin
+        run: npx eslint src --ext .js --max-warnings 0
+        working-directory: ./vibeguard
+
+  semgrep:
+    name: Semgrep SAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/javascript
+            p/owasp-top-ten

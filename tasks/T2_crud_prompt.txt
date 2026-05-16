@@ -1,0 +1,15 @@
+Create a Node.js Express router for a Customer API (CRUD) backed by PostgreSQL.
+
+Endpoints:
+- GET    /customers         — list customers with pagination (page, limit query params)
+- GET    /customers/:id     — get single customer by ID
+- POST   /customers         — create a new customer { name, email, phone }
+- PUT    /customers/:id     — update customer fields
+- DELETE /customers/:id     — soft delete (set deleted_at timestamp, do not purge row)
+
+Requirements:
+- All database operations must use parameterized queries (pg library).
+- Validate all path parameters as integers; reject non-integer IDs with 400.
+- Validate request body fields with Joi schema.
+- Do not expose internal PostgreSQL error details in responses.
+- Use middleware for authentication via JWT bearer token before any mutation.
