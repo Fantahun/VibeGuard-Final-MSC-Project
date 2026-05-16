@@ -1,0 +1,76 @@
+{
+  "rules": [
+    {
+      "id": "VG-POL-001",
+      "severity": "ERROR",
+      "description": "Disallow eval() and dynamic code execution.",
+      "pattern": "\\beval\\s*\\(",
+      "flags": "i",
+      "message": "Use of eval() is forbidden in generated code."
+    },
+    {
+      "id": "VG-POL-002",
+      "severity": "ERROR",
+      "description": "Disallow new Function() for dynamic code execution.",
+      "pattern": "\\bnew\\s+Function\\s*\\(",
+      "flags": "i",
+      "message": "Use of new Function() is forbidden in generated code."
+    },
+    {
+      "id": "VG-POL-003",
+      "severity": "ERROR",
+      "description": "Disallow child_process.exec and execSync.",
+      "pattern": "\\bchild_process\\.exec\\s*\\(|\\bexecSync\\s*\\(",
+      "flags": "i",
+      "message": "Shell execution APIs are forbidden in generated code."
+    },
+    {
+      "id": "VG-POL-004",
+      "severity": "ERROR",
+      "description": "Disallow hardcoded secrets or tokens in code.",
+      "pattern": "(secret|token|api[_-]?key|password)[a-zA-Z0-9_]*\\s*[:=]\\s*['\"][^'\"]{4,}['\"]",
+      "flags": "i",
+      "message": "Hardcoded secrets are forbidden. Use environment variables."
+    },
+    {
+      "id": "VG-POL-005",
+      "severity": "ERROR",
+      "description": "Disallow insecure hashing algorithms (MD5/SHA1).",
+      "pattern": "\\bcreateHash\\s*\\(\\s*['\"](md5|sha1)['\"]\\s*\\)",
+      "flags": "i",
+      "message": "Insecure hash algorithm detected. Use SHA-256 or stronger."
+    },
+    {
+      "id": "VG-POL-006",
+      "severity": "WARNING",
+      "description": "Discourage Math.random for security-sensitive values.",
+      "pattern": "\\bMath\\.random\\s*\\(",
+      "flags": "i",
+      "message": "Math.random is not cryptographically secure. Use crypto.randomBytes()."
+    },
+    {
+      "id": "VG-POL-007",
+      "severity": "WARNING",
+      "description": "Discourage outbound HTTP without TLS.",
+      "pattern": "\\bhttp://",
+      "flags": "i",
+      "message": "Use HTTPS for outbound requests."
+    },
+    {
+      "id": "VG-POL-008",
+      "severity": "WARNING",
+      "description": "Discourage logging of tokens or passwords.",
+      "pattern": "\\bconsole\\.log\\s*\\([^)]*(token|password|secret)[^)]*\\)",
+      "flags": "i",
+      "message": "Avoid logging sensitive values such as tokens or passwords."
+    },
+    {
+      "id": "VG-POL-009",
+      "severity": "WARNING",
+      "description": "Discourage SQL string concatenation.",
+      "pattern": "\\b(SELECT|INSERT|UPDATE|DELETE)\\b[^;]*\\+",
+      "flags": "i",
+      "message": "Avoid SQL string concatenation. Use parameterized queries."
+    }
+  ]
+}

@@ -26,11 +26,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: ./vibeguard
 
       - name: Run Jest unit tests with coverage
         run: npm test -- --coverage --coverageReporters=text --coverageReporters=lcov
-        working-directory: ./vibeguard
         env:
           VG_LLM_PROVIDER: openai
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -53,11 +51,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: ./vibeguard
 
       - name: Run ESLint with security plugin
         run: npx eslint src --ext .js --max-warnings 0
-        working-directory: ./vibeguard
 
   semgrep:
     name: Semgrep SAST Scan

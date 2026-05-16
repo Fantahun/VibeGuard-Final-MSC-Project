@@ -9,6 +9,7 @@
  * This is the enforcement core of the framework's security control loop.
  */
 const config = require('../../config/default');
+const policyStore = require('./policyStore');
 
 const DECISIONS = Object.freeze({
   ACCEPT: 'ACCEPT',
@@ -21,14 +22,17 @@ class PolicyEngine {
    * Evaluate findings and return a structured policy decision.
    * @param {object[]} findings    - normalized findings from ValidationEngine
    * @param {number}   attempt     - current regeneration attempt count
+   * @param {string}   code        - generated code for policy checks
    * @returns {object} decision record
    */
-  evaluate(findings, attempt = 0) {
-    const critical = findings.filter(f => config.policy.criticalSeverities.includes(f.severity));
-    const warnings = findings.filter(f => config.policy.warnSeverities.includes(f.severity));
+  evaluate(findings, attempt = 0, code = '') {
+    const policyFindings = policyStore.evaluate(code);
+    const combined = [...findings, ...policyFindings];
+    const critical = combined.filter(f => config.policy.criticalSeverities.includes(f.severity));
+    const warnings = combined.filter(f => config.policy.warnSeverities.includes(f.severity));
 
     // CWE-targeted critical findings take priority
-    const cweCritical = findings.filter(
+    const cweCritical = combined.filter(
       f => f.cwe && config.policy.criticalCwes.includes(f.cwe)
     );
 
@@ -40,6 +44,7 @@ class PolicyEngine {
         reason: `${blockers.length} critical finding(s) require remediation.`,
         blockers: blockers.map(this._summarize),
         warnings: warnings.map(this._summarize),
+        policyFindings: policyFindings.map(this._summarize),
         attempt,
       };
     }
@@ -52,6 +57,7 @@ class PolicyEngine {
                 `${blockers.length} unresolved critical finding(s). Developer review required.`,
         blockers: blockers.map(this._summarize),
         warnings: warnings.map(this._summarize),
+        policyFindings: policyFindings.map(this._summarize),
         attempt,
       };
     }
@@ -62,6 +68,7 @@ class PolicyEngine {
         reason: `${warnings.length} informational finding(s) noted.`,
         blockers: [],
         warnings: warnings.map(this._summarize),
+        policyFindings: policyFindings.map(this._summarize),
         attempt,
       };
     }
@@ -71,6 +78,7 @@ class PolicyEngine {
       reason: 'No policy violations detected. Code approved.',
       blockers: [],
       warnings: [],
+      policyFindings: policyFindings.map(this._summarize),
       attempt,
     };
   }

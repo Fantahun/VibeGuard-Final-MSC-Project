@@ -17,7 +17,8 @@ const promptEnricher = require('../enricher/promptEnricher');
 const llmConnector = require('../llm/llmConnector');
 const validationEngine = require('../validator/validationEngine');
 const { PolicyEngine, DECISIONS } = require('../policy/policyEngine');
-const provenanceLogger = require('../logger/provenanceLogger');
+const promptInterceptor = require('../interceptor/promptInterceptor');
+const sessionManager = require('./sessionManager');
 const config = require('../../config/default');
 
 class Orchestrator {
@@ -28,18 +29,21 @@ class Orchestrator {
    * @returns {object} session result
    */
   async run(userPrompt, options = {}) {
-    const { taskId = 'TASK_UNSPECIFIED', mode = 'vibeguard' } = options;
+    const { taskId = 'TASK_UNSPECIFIED', mode = 'vibeguard', postProcess } = options;
 
     // Step 1 — start session
-    const session = provenanceLogger.startSession(taskId, mode);
-    session.prompt = userPrompt;
+    const session = sessionManager.start(taskId, mode);
+    const capture = promptInterceptor.capture(userPrompt);
+    session.prompt = capture.prompt;
+    session.promptLength = capture.length;
+    session.promptCapturedAt = capture.capturedAt;
 
     // Step 2 — classify risk
-    const risk = riskClassifier.classify(userPrompt);
+    const risk = riskClassifier.classify(session.prompt);
     session.riskAssessment = risk;
 
     // Step 3 — enrich prompt
-    let enrichment = promptEnricher.enrich(userPrompt, risk);
+    let enrichment = promptEnricher.enrich(session.prompt, risk);
     session.enrichedPrompt = enrichment.userPrompt;
     session.appliedCategories = enrichment.appliedCategories;
 
@@ -54,7 +58,7 @@ class Orchestrator {
 
       if (attempt > 0) {
         // Build corrective enrichment
-        enrichment = promptEnricher.enrichForRegeneration(userPrompt, risk, lastFindings);
+        enrichment = promptEnricher.enrichForRegeneration(session.prompt, risk, lastFindings);
       }
 
       // Step 4 — generate
@@ -68,7 +72,7 @@ class Orchestrator {
       session.validationFindings = lastFindings;
 
       // Step 6 — apply policy
-      const policyResult = PolicyEngine.evaluate(lastFindings, attempt);
+      const policyResult = PolicyEngine.evaluate(lastFindings, attempt, generation.code);
       finalDecision = policyResult;
       session.policyDecision = policyResult.decision;
 
@@ -79,8 +83,23 @@ class Orchestrator {
     session.approved = finalDecision.decision === DECISIONS.ACCEPT;
     session.generatedCode = finalCode;
 
+    // Optional post-processing hook (e.g., attach test results)
+    if (typeof postProcess === 'function') {
+      const extra = await postProcess({
+        sessionId: session.sessionId,
+        taskId,
+        mode,
+        code: finalCode,
+        findings: lastFindings,
+        decision: finalDecision,
+      });
+      if (extra && typeof extra === 'object') {
+        Object.assign(session, extra);
+      }
+    }
+
     // Step 9 — commit provenance
-    const record = provenanceLogger.commit(session);
+    const record = sessionManager.commit(session);
 
     return {
       sessionId: record.sessionId,

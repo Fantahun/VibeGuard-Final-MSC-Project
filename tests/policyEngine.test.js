@@ -48,4 +48,16 @@ describe('PolicyEngine', () => {
     const result = PolicyEngine.evaluate(findings, 0);
     expect(result.decision).toBe(DECISIONS.REGENERATE);
   });
+
+  test('policy rules trigger REGENERATE for forbidden patterns', () => {
+    const code = "const x = eval('1 + 1');";
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.decision).toBe(DECISIONS.REGENERATE);
+  });
+
+  test('hardcoded secret triggers REGENERATE', () => {
+    const code = "const JWT_SECRET = 'supersecret';";
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.decision).toBe(DECISIONS.REGENERATE);
+  });
 });

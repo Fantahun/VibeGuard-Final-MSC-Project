@@ -1,0 +1,11 @@
+{
+  "baseline": {
+    "sessions": 1,
+    "avgVulnerabilityDensity": 0,
+    "avgDurationMs": 0,
+    "avgCriticalFindings": 0,
+    "approvalRate": 0,
+    "avgDevelopmentTimeMs": null,
+    "avgTestPassRate": null
+  }
+}

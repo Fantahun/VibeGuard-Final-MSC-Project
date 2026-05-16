@@ -41,6 +41,8 @@ class ProvenanceLogger {
       policyDecision: null,
       regenerationCount: 0,
       approved: false,
+      developmentTimeMs: null,
+      testResults: null,
       endTime: null,
       durationMs: null,
     };
@@ -62,6 +64,23 @@ class ProvenanceLogger {
   }
 
   /**
+   * Append a human review decision for WARN outcomes.
+   * @param {string} sessionId
+   * @param {boolean} approved
+   * @param {string} [notes]
+   */
+  logReview(sessionId, approved, notes = '') {
+    const reviewRecord = {
+      type: 'review',
+      sessionId,
+      approved: Boolean(approved),
+      notes,
+      timestamp: Date.now(),
+    };
+    fs.appendFileSync(this.provenanceFile, JSON.stringify(reviewRecord) + '\n');
+  }
+
+  /**
    * Append a simplified metrics record for quantitative analysis.
    * @param {object} record
    */
@@ -70,6 +89,11 @@ class ProvenanceLogger {
     const criticalCount = findings.filter(f => f.severity === 'ERROR').length;
     const warningCount = findings.filter(f => f.severity === 'WARNING').length;
     const infoCount = findings.filter(f => f.severity === 'INFO').length;
+    const testResults = record.testResults || null;
+
+    const testPassRate = testResults && typeof testResults.passed === 'number' && typeof testResults.total === 'number'
+      ? (testResults.total > 0 ? (testResults.passed / testResults.total) * 100 : 0)
+      : null;
 
     const linesOfCode = record.generatedCode
       ? record.generatedCode.split('\n').filter(l => l.trim().length > 0).length
@@ -85,6 +109,7 @@ class ProvenanceLogger {
       mode: record.mode,
       model: record.model,
       durationMs: record.durationMs,
+      developmentTimeMs: record.developmentTimeMs,
       linesOfCode,
       criticalFindings: criticalCount,
       warningFindings: warningCount,
@@ -94,6 +119,8 @@ class ProvenanceLogger {
       regenerationCount: record.regenerationCount,
       approved: record.approved,
       policyDecision: record.policyDecision,
+      testPassRate: testPassRate === null ? null : parseFloat(testPassRate.toFixed(2)),
+      testDurationMs: testResults ? testResults.durationMs || null : null,
     };
 
     fs.appendFileSync(this.metricsFile, JSON.stringify(metricsRow) + '\n');
@@ -139,6 +166,14 @@ class ProvenanceLogger {
       const avgDuration = rows.reduce((a, r) => a + r.durationMs, 0) / rows.length;
       const avgCritical = rows.reduce((a, r) => a + r.criticalFindings, 0) / rows.length;
       const approvalRate = rows.filter(r => r.approved).length / rows.length;
+      const devRows = rows.filter(r => typeof r.developmentTimeMs === 'number');
+      const avgDevTime = devRows.length > 0
+        ? devRows.reduce((a, r) => a + r.developmentTimeMs, 0) / devRows.length
+        : null;
+      const testRows = rows.filter(r => typeof r.testPassRate === 'number');
+      const avgTestPassRate = testRows.length > 0
+        ? testRows.reduce((a, r) => a + r.testPassRate, 0) / testRows.length
+        : null;
 
       summary[mode] = {
         sessions: rows.length,
@@ -146,6 +181,8 @@ class ProvenanceLogger {
         avgDurationMs: parseFloat(avgDuration.toFixed(0)),
         avgCriticalFindings: parseFloat(avgCritical.toFixed(2)),
         approvalRate: parseFloat((approvalRate * 100).toFixed(1)),
+        avgDevelopmentTimeMs: avgDevTime === null ? null : parseFloat(avgDevTime.toFixed(0)),
+        avgTestPassRate: avgTestPassRate === null ? null : parseFloat(avgTestPassRate.toFixed(2)),
       };
     }
 

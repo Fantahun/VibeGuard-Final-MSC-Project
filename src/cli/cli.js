@@ -12,9 +12,45 @@ require('dotenv').config();
 const { Command } = require('commander');
 const chalk = require('chalk');
 const ora = require('ora');
+const inquirer = require('inquirer');
 const fs = require('fs');
+const repoIntegration = require('../integration/repoIntegration');
 const orchestrator = require('../orchestrator/orchestrator');
 const provenanceLogger = require('../logger/provenanceLogger');
+const { handleWarnReview } = require('./reviewHandler');
+
+function parseOptionalInt(value, label) {
+  if (value === undefined || value === null) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid ${label}: ${value}`);
+  }
+  return Math.trunc(parsed);
+}
+
+function buildTestResults(opts) {
+  const passed = parseOptionalInt(opts.testPassed, 'test passed');
+  const failed = parseOptionalInt(opts.testFailed, 'test failed');
+  const total = parseOptionalInt(opts.testTotal, 'test total');
+  const durationMs = parseOptionalInt(opts.testDurationMs, 'test duration');
+  const success = typeof opts.testSuccess === 'boolean' ? opts.testSuccess : null;
+
+  if (passed === null && failed === null && total === null && durationMs === null && success === null) {
+    return null;
+  }
+
+  const derivedTotal = total !== null
+    ? total
+    : (passed !== null && failed !== null ? passed + failed : null);
+
+  return {
+    passed: passed ?? 0,
+    failed: failed ?? 0,
+    total: derivedTotal ?? 0,
+    durationMs,
+    success: success !== null ? success : (failed === 0),
+  };
+}
 
 const program = new Command();
 program
@@ -32,6 +68,13 @@ program
   .option('-t, --task-id <id>', 'Task identifier for experiment tracking', 'TASK_UNKNOWN')
   .option('-m, --mode <mode>', 'Session mode: baseline | vibeguard', 'vibeguard')
   .option('-o, --output <file>', 'Save generated code to file')
+  .option('--dev-time-ms <ms>', 'Record development time in milliseconds')
+  .option('--test-passed <n>', 'Record number of passed tests')
+  .option('--test-failed <n>', 'Record number of failed tests')
+  .option('--test-total <n>', 'Record total number of tests')
+  .option('--test-duration-ms <ms>', 'Record test duration in milliseconds')
+  .option('--test-success', 'Mark tests as successful')
+  .option('--test-failure', 'Mark tests as failed')
   .action(async (opts) => {
     console.log(chalk.bold.cyan('\n╔══════════════════════════════════════╗'));
     console.log(chalk.bold.cyan('║  VibeGuard Security-Integrated CLI   ║'));
@@ -40,9 +83,35 @@ program
     const spinner = ora('Classifying prompt risk...').start();
 
     try {
+      if (opts.testSuccess && opts.testFailure) {
+        throw new Error('Use only one of --test-success or --test-failure.');
+      }
+
+      const testSuccessFlag = opts.testSuccess ? true : opts.testFailure ? false : null;
+      const developmentTimeMs = parseOptionalInt(opts.devTimeMs, 'development time');
+      const passed = parseOptionalInt(opts.testPassed, 'test passed');
+      const failed = parseOptionalInt(opts.testFailed, 'test failed');
+      const total = parseOptionalInt(opts.testTotal, 'test total');
+
+      if (total !== null && passed !== null && failed !== null && total < (passed + failed)) {
+        throw new Error('Invalid test totals: test-total is less than test-passed + test-failed.');
+      }
+
+      const testResults = buildTestResults({
+        testPassed: passed,
+        testFailed: failed,
+        testTotal: total,
+        testDurationMs: opts.testDurationMs,
+        testSuccess: testSuccessFlag,
+      });
+
       const result = await orchestrator.run(opts.prompt, {
         taskId: opts.taskId,
         mode: opts.mode,
+        postProcess: async () => ({
+          developmentTimeMs,
+          testResults,
+        }),
       });
 
       spinner.succeed('Session completed.');
@@ -84,19 +153,52 @@ program
 
       // Decision
       console.log(chalk.bold('\n[5] POLICY DECISION'));
-      const decColor = result.approved ? chalk.green : chalk.red;
+      const decColor = result.approved ? chalk.green : result.decision.decision === 'WARN' ? chalk.yellow : chalk.red;
       console.log(`  ${decColor(result.policyReport)}`);
 
+      // Explicit WARN review flow
+      let reviewApproved = false;
+      if (result.decision.decision === 'WARN') {
+        const review = await handleWarnReview({
+          sessionId: result.sessionId,
+          inquirer,
+          provenanceLogger,
+          stdinIsTTY: process.stdin.isTTY,
+        });
+        reviewApproved = review.approved;
+        if (!reviewApproved) {
+          console.log(chalk.yellow('\n[6] REVIEW REQUIRED: output not approved.'));
+        } else {
+          console.log(chalk.green('[6] REVIEW APPROVED: output can be used with caution.'));
+        }
+      }
+
       // Code output
-      if (result.approved || result.decision.decision === 'WARN') {
+      if (result.approved || reviewApproved) {
         if (opts.output) {
           fs.writeFileSync(opts.output, result.code, 'utf8');
           console.log(chalk.bold(`\n[6] OUTPUT saved to: ${opts.output}`));
         } else {
-          console.log(chalk.bold('\n[6] GENERATED CODE:'));
+          console.log(chalk.bold(`\n[${result.approved ? '6' : '7'}] GENERATED CODE:`));
           console.log(chalk.gray('─'.repeat(60)));
           console.log(result.code);
           console.log(chalk.gray('─'.repeat(60)));
+        }
+
+        const integrationResult = repoIntegration.deliverApproved(result.code, {
+          sessionId: result.sessionId,
+          taskId: result.taskId,
+          mode: result.mode,
+          model: result.model,
+          decision: result.decision.decision,
+          approved: result.approved || reviewApproved,
+          regenerationCount: result.regenerationCount,
+        }, opts.output);
+
+        if (integrationResult) {
+          console.log(chalk.bold(`\n[7] INTEGRATION OUTPUT:`));
+          console.log(`  Code: ${integrationResult.codePath}`);
+          console.log(`  Metadata: ${integrationResult.metaPath}`);
         }
       }
 

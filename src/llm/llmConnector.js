@@ -6,12 +6,14 @@
  */
 const OpenAI = require('openai');
 const Anthropic = require('@anthropic-ai/sdk');
+const axios = require('axios');
 const config = require('../../config/default');
 
 class LLMConnector {
   constructor() {
     this._openai = null;
     this._anthropic = null;
+    this._ollama = null;
   }
 
   _getOpenAI() {
@@ -28,6 +30,16 @@ class LLMConnector {
     return this._anthropic;
   }
 
+  _getOllama() {
+    if (!this._ollama) {
+      this._ollama = axios.create({
+        baseURL: config.llm.ollama.baseUrl,
+        timeout: 60000,
+      });
+    }
+    return this._ollama;
+  }
+
   /**
    * Send an enriched prompt to the configured LLM and return the result.
    * @param {object} enrichment  - output from PromptEnricher.enrich()
@@ -39,6 +51,9 @@ class LLMConnector {
 
     if (provider === 'anthropic') {
       return this._generateAnthropic(enrichment, start);
+    }
+    if (provider === 'ollama') {
+      return this._generateOllama(enrichment, start);
     }
     return this._generateOpenAI(enrichment, start);
   }
@@ -91,6 +106,35 @@ class LLMConnector {
       provider: 'anthropic',
       promptTokens: message.usage.input_tokens,
       completionTokens: message.usage.output_tokens,
+      durationMs: Date.now() - start,
+    };
+  }
+
+  async _generateOllama(enrichment, start) {
+    const cfg = config.llm.ollama;
+    const client = this._getOllama();
+
+    const response = await client.post('/api/chat', {
+      model: cfg.model,
+      stream: false,
+      messages: [
+        { role: 'system', content: enrichment.systemPrompt },
+        { role: 'user', content: enrichment.userPrompt },
+      ],
+      options: {
+        temperature: cfg.temperature,
+        num_predict: cfg.maxTokens,
+      },
+    });
+
+    const code = response.data?.message?.content?.trim() || '';
+
+    return {
+      code,
+      model: cfg.model,
+      provider: 'ollama',
+      promptTokens: response.data?.prompt_eval_count || null,
+      completionTokens: response.data?.eval_count || null,
       durationMs: Date.now() - start,
     };
   }
