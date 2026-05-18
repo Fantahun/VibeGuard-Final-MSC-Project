@@ -132,6 +132,14 @@ program
       if (result.enriched) {
         console.log(`  Applied:  ${(result.riskAssessment.categories || []).join(', ')}`);
       }
+      console.log(chalk.bold('\n[2.1] SYSTEM PROMPT'));
+      console.log(chalk.gray('─'.repeat(60)));
+      console.log(result.systemPrompt || '');
+      console.log(chalk.gray('─'.repeat(60)));
+      console.log(chalk.bold('\n[2.2] ENRICHED PROMPT'));
+      console.log(chalk.gray('─'.repeat(60)));
+      console.log(result.enrichedPrompt || '');
+      console.log(chalk.gray('─'.repeat(60)));
 
       // Generation
       console.log(chalk.bold('\n[3] CODE GENERATION'));

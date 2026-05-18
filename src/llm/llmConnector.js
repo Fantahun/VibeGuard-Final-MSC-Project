@@ -34,7 +34,7 @@ class LLMConnector {
     if (!this._ollama) {
       this._ollama = axios.create({
         baseURL: config.llm.ollama.baseUrl,
-        timeout: 60000,
+        timeout: config.llm.ollama.timeoutMs,
       });
     }
     return this._ollama;

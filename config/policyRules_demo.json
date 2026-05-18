@@ -1,0 +1,12 @@
+{
+  "rules": [
+    {
+      "id": "VG-DEMO-001",
+      "severity": "ERROR",
+      "description": "Demo rule to force regeneration for visibility.",
+      "pattern": "\\bexpress\\s*\\(",
+      "flags": "i",
+      "message": "Demo rule triggered to force regenerate and review flow."
+    }
+  ]
+}

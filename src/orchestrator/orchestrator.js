@@ -107,6 +107,8 @@ class Orchestrator {
       mode,
       riskAssessment: risk,
       enriched: enrichment.enriched,
+      enrichedPrompt: enrichment.userPrompt,
+      systemPrompt: enrichment.systemPrompt,
       code: finalCode,
       model: session.model,
       decision: finalDecision,

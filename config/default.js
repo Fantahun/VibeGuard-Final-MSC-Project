@@ -24,6 +24,7 @@ module.exports = {
       model: process.env.VG_OLLAMA_MODEL || 'llama3.1:8b',
       temperature: parseFloat(process.env.VG_TEMPERATURE || '0.2'),
       maxTokens: parseInt(process.env.VG_MAX_TOKENS || '4096', 10),
+      timeoutMs: parseInt(process.env.VG_OLLAMA_TIMEOUT_MS || '120000', 10),
     },
   },
   validation: {

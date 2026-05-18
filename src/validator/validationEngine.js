@@ -64,8 +64,8 @@ class ValidationEngine {
     let output;
     try {
       output = execSync(
-        `semgrep --config ${config.validation.semgrepRules} --json ${filePath} 2>/dev/null`,
-        { encoding: 'utf8', timeout: 30000 }
+        `semgrep --config ${config.validation.semgrepRules} --json ${filePath}`,
+        { encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] }
       );
     } catch (e) {
       // Semgrep exits non-zero when findings exist; stdout still has JSON
@@ -112,8 +112,8 @@ class ValidationEngine {
     let output;
     try {
       output = execSync(
-        `npx eslint --rulesdir /dev/null -f json --no-eslintrc -c ${configPath} ${filePath} 2>/dev/null`,
-        { encoding: 'utf8', timeout: 20000 }
+        `npx eslint -f json --no-eslintrc -c ${configPath} ${filePath}`,
+        { encoding: 'utf8', timeout: 20000, stdio: ['ignore', 'pipe', 'pipe'] }
       );
     } catch (e) {
       output = e.stdout || '';

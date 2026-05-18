@@ -71,6 +71,14 @@
       "pattern": "\\b(SELECT|INSERT|UPDATE|DELETE)\\b[^;]*\\+",
       "flags": "i",
       "message": "Avoid SQL string concatenation. Use parameterized queries."
+    },
+    {
+      "id": "VG-WARN-DEMO-001",
+      "severity": "WARNING",
+      "description": "Demo rule to force WARN output.",
+      "pattern": "\\btoken\\b",
+      "flags": "i",
+      "message": "Demo WARN: review token handling before use."
     }
   ]
 }
