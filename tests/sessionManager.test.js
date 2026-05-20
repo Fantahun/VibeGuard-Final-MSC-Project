@@ -1,21 +1,22 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 
-// Use temp log dir for tests (set before module load)
-const tempDir = path.join(os.tmpdir(), 'vg_test_logs_sm');
-process.env.VG_LOG_DIR = tempDir;
-process.env.VG_PROVENANCE_FILE = path.join(tempDir, 'provenance.jsonl');
-process.env.VG_METRICS_FILE = path.join(tempDir, 'metrics.jsonl');
-
-const sessionManager = require('../src/orchestrator/sessionManager');
+let sessionManager;
 
 beforeEach(() => {
+    jest.resetModules();
+    const tempDir = path.join(
+        process.cwd(),
+        'tmp',
+        'vg_test_logs_sm',
+        `${Date.now()}_${Math.random().toString(16).slice(2)}`
+    );
+    process.env.VG_LOG_DIR = tempDir;
+    process.env.VG_PROVENANCE_FILE = path.join(tempDir, 'provenance.jsonl');
+    process.env.VG_METRICS_FILE = path.join(tempDir, 'metrics.jsonl');
     fs.mkdirSync(tempDir, { recursive: true });
-    [process.env.VG_PROVENANCE_FILE, process.env.VG_METRICS_FILE].forEach(f => {
-        if (fs.existsSync(f)) fs.unlinkSync(f);
-    });
+    sessionManager = require('../src/orchestrator/sessionManager');
 });
 
 describe('SessionManager', () => {

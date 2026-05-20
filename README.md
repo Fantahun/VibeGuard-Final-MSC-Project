@@ -146,6 +146,7 @@ VG_INTEGRATION_DIR=./integrations/approved
 # Experiment test execution
 VG_RUN_TESTS=false
 VG_TEST_COMMAND="npm test -- --json --outputFile"
+VG_EXPERIMENT_REPETITIONS=1
 ```
 
 ---
@@ -184,13 +185,24 @@ WARN outcomes require explicit human approval in the CLI before output is shown 
 node src/experiment/runner.js
 ```
 
+Run a formal Chapter 5 batch with three repetitions per task and a stable run ID:
+
+```bash
+node src/experiment/runner.js --repetitions 3 --run-id ch5-formal-run-01
+```
+
 Run with tests enabled and custom test command:
 
 ```bash
 node src/experiment/runner.js --run-tests --test-command "npm test -- --json --outputFile"
 ```
 
-Reminder: ensure your LLM API key is set in `.env` before running experiments.
+Each experiment invocation writes a clean run folder under `logs/runs/<run-id>/` containing
+`provenance.jsonl`, `metrics.jsonl`, `environment.json`, `summary.json`, `summary.csv`,
+`task_deltas.csv`, and optional raw test output under `test-results/`.
+
+Reminder: ensure your LLM API key is set in `.env` before running experiments. Baseline mode
+is reserved for the experiment runner; the CLI `generate` command always runs the VibeGuard path.
 
 ### View metrics summary
 
@@ -216,8 +228,8 @@ npm test
 | T4 | Secure file upload         | Path traversal, MIME    |
 | T5 | Message queue producer     | PII logging, amqplib    |
 
-Each task is run in both `baseline` and `vibeguard` mode. Results are written to
-`logs/provenance.jsonl` and `logs/metrics.jsonl` for quantitative analysis.
+Each task is run in both `baseline` and `vibeguard` mode by the experiment runner. Results are written
+to a run-specific folder under `logs/runs/` for quantitative analysis.
 
 ---
 
@@ -228,6 +240,9 @@ Each session produces:
 - `vulnerabilityDensity` — security findings per 1000 LOC
 - `criticalFindings` — ERROR-level findings count
 - `warningFindings` — WARNING-level findings count
+- `policyFindings` — custom policy-rule findings count
+- `validationToolErrors` — validation tools that failed to run or parse
+- `responseNormalized` — whether model output needed fence/prose cleanup
 - `durationMs` — total session duration
 - `developmentTimeMs` — optional development time (if provided)
 - `regenerationCount` — how many retries were needed
@@ -237,21 +252,31 @@ Each session produces:
 When experiment tests are enabled, raw test output JSON is stored under:
 
 ```
-logs/test-results/
+logs/runs/<run-id>/test-results/
 ```
 
 ---
 
 ## Policy rules (tuning)
 
-Custom policy rules live in `config/policyRules.json` and are evaluated in addition to Semgrep
-and ESLint-security. Each rule is a regex with a severity (ERROR → regenerate, WARNING → review).
+Formal evaluation policy rules live in `config/policyRules.json` and are evaluated in addition to
+Semgrep and ESLint-security. Each rule is a regex with a severity (ERROR → regenerate,
+WARNING → review).
+
+Demo-only rules live in `config/policyRules.demo.json` and are opt-in. For a defense demo that needs
+forced WARN/REGENERATE behavior, load both files:
+
+```bash
+set VG_POLICY_RULES=./config/policyRules.json,./config/policyRules.demo.json
+```
+
+Do not use the demo profile for formal Chapter 5 evaluation runs.
 
 To tune:
 
 - Add or remove rules under `rules`.
 - Adjust severity to `ERROR` or `WARNING`.
-- Point to a different rule file with `VG_POLICY_RULES`.
+- Point to a different rule file, or comma-separated rule files, with `VG_POLICY_RULES`.
 
 Keep rules focused on clear, enforceable constraints (e.g., disallow hardcoded secrets, insecure
 hashes, or shell execution APIs).

@@ -29,10 +29,23 @@ class Orchestrator {
    * @returns {object} session result
    */
   async run(userPrompt, options = {}) {
-    const { taskId = 'TASK_UNSPECIFIED', mode = 'vibeguard', postProcess } = options;
+    const {
+      taskId = 'TASK_UNSPECIFIED',
+      mode = 'vibeguard',
+      postProcess,
+      repetition = null,
+      experimentRunId = null,
+      experimentRunDir = null,
+    } = options;
+    if (mode !== 'vibeguard') {
+      throw new Error('The orchestrator only runs the VibeGuard pipeline. Use src/experiment/runner.js for baseline evaluation runs.');
+    }
 
     // Step 1 — start session
     const session = sessionManager.start(taskId, mode);
+    session.repetition = repetition;
+    session.experimentRunId = experimentRunId;
+    session.experimentRunDir = experimentRunDir;
     const capture = promptInterceptor.capture(userPrompt);
     session.prompt = capture.prompt;
     session.promptLength = capture.length;
@@ -65,16 +78,26 @@ class Orchestrator {
       generation = await llmConnector.generate(enrichment);
       session.model = `${generation.provider}/${generation.model}`;
       finalCode = generation.code;
+      session.rawGeneratedCode = generation.rawCode || generation.code;
+      session.responseNormalization = generation.responseNormalization || null;
 
       // Step 5 — validate
       const validation = await validationEngine.validate(generation.code);
       lastFindings = validation.findings;
       session.validationFindings = lastFindings;
+      session.validationToolsRun = validation.toolsRun;
+      session.validationToolErrors = validation.toolErrors || [];
 
       // Step 6 — apply policy
-      const policyResult = PolicyEngine.evaluate(lastFindings, attempt, generation.code);
+      const policyResult = PolicyEngine.evaluate(lastFindings, attempt, generation.code, {
+        toolErrors: session.validationToolErrors,
+      });
       finalDecision = policyResult;
       session.policyDecision = policyResult.decision;
+      session.policyReason = policyResult.reason;
+      session.policyFindings = policyResult.policyFindings || [];
+      session.policyBlockers = policyResult.blockers || [];
+      session.policyWarnings = policyResult.warnings || [];
 
       if (policyResult.decision !== DECISIONS.REGENERATE) break;
     }
@@ -89,6 +112,9 @@ class Orchestrator {
         sessionId: session.sessionId,
         taskId,
         mode,
+        repetition,
+        experimentRunId,
+        experimentRunDir,
         code: finalCode,
         findings: lastFindings,
         decision: finalDecision,
@@ -105,11 +131,13 @@ class Orchestrator {
       sessionId: record.sessionId,
       taskId,
       mode,
+      repetition,
       riskAssessment: risk,
       enriched: enrichment.enriched,
       enrichedPrompt: enrichment.userPrompt,
       systemPrompt: enrichment.systemPrompt,
       code: finalCode,
+      responseNormalization: session.responseNormalization,
       model: session.model,
       decision: finalDecision,
       policyReport: PolicyEngine.formatReport(finalDecision),

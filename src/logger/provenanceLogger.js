@@ -22,6 +22,29 @@ class ProvenanceLogger {
   }
 
   /**
+   * Repoint this logger to a run-specific output directory.
+   * @param {object} paths - { dir, provenance, metrics }
+   * @returns {object} resolved paths
+   */
+  configurePaths(paths = {}) {
+    const logDir = path.resolve(paths.dir || config.logging.dir);
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+
+    this.provenanceFile = path.resolve(paths.provenance || path.join(logDir, 'provenance.jsonl'));
+    this.metricsFile = path.resolve(paths.metrics || path.join(logDir, 'metrics.jsonl'));
+
+    return this.getPaths();
+  }
+
+  getPaths() {
+    return {
+      provenanceFile: this.provenanceFile,
+      metricsFile: this.metricsFile,
+      logDir: path.dirname(this.provenanceFile),
+    };
+  }
+
+  /**
    * Create a new session record.
    * @param {string} taskId   - experiment task identifier
    * @param {string} mode     - 'baseline' | 'vibeguard'
@@ -78,6 +101,13 @@ class ProvenanceLogger {
       timestamp: Date.now(),
     };
     fs.appendFileSync(this.provenanceFile, JSON.stringify(reviewRecord) + '\n');
+    fs.appendFileSync(this.metricsFile, JSON.stringify({
+      type: 'review',
+      sessionId,
+      reviewApproved: Boolean(approved),
+      reviewNotesPresent: Boolean(notes),
+      timestamp: reviewRecord.timestamp,
+    }) + '\n');
   }
 
   /**
@@ -85,10 +115,17 @@ class ProvenanceLogger {
    * @param {object} record
    */
   _updateMetrics(record) {
-    const findings = record.validationFindings || [];
+    const validationFindings = record.validationFindings || [];
+    const policyFindings = record.policyFindings || [];
+    const findings = [...validationFindings, ...policyFindings];
     const criticalCount = findings.filter(f => f.severity === 'ERROR').length;
     const warningCount = findings.filter(f => f.severity === 'WARNING').length;
     const infoCount = findings.filter(f => f.severity === 'INFO').length;
+    const policyErrorCount = policyFindings.filter(f => f.severity === 'ERROR').length;
+    const policyWarningCount = policyFindings.filter(f => f.severity === 'WARNING').length;
+    const validationErrorCount = validationFindings.filter(f => f.severity === 'ERROR').length;
+    const validationWarningCount = validationFindings.filter(f => f.severity === 'WARNING').length;
+    const validationToolErrors = record.validationToolErrors || [];
     const testResults = record.testResults || null;
 
     const testPassRate = testResults && typeof testResults.passed === 'number' && typeof testResults.total === 'number'
@@ -115,10 +152,24 @@ class ProvenanceLogger {
       warningFindings: warningCount,
       infoFindings: infoCount,
       totalFindings: findings.length,
+      validationFindings: validationFindings.length,
+      validationErrorFindings: validationErrorCount,
+      validationWarningFindings: validationWarningCount,
+      policyFindings: policyFindings.length,
+      policyErrorFindings: policyErrorCount,
+      policyWarningFindings: policyWarningCount,
       vulnerabilityDensity: parseFloat(vulnerabilityDensity.toFixed(4)),
       regenerationCount: record.regenerationCount,
       approved: record.approved,
       policyDecision: record.policyDecision,
+      policyReason: record.policyReason || null,
+      reviewRequired: record.policyDecision === 'WARN',
+      reviewApproved: typeof record.reviewApproved === 'boolean' ? record.reviewApproved : null,
+      validationToolsRun: record.validationToolsRun || [],
+      validationToolErrors: validationToolErrors.length,
+      validationToolErrorDetails: validationToolErrors,
+      responseNormalized: Boolean(record.responseNormalization?.normalized),
+      responseNormalization: record.responseNormalization || null,
       testPassRate: testPassRate === null ? null : parseFloat(testPassRate.toFixed(2)),
       testDurationMs: testResults ? testResults.durationMs || null : null,
     };
@@ -159,13 +210,17 @@ class ProvenanceLogger {
     const summary = {};
 
     for (const mode of ['baseline', 'vibeguard']) {
-      const rows = metrics.filter(m => m.mode === mode);
+      const rows = metrics.filter(m => m.mode === mode && m.type !== 'review');
       if (rows.length === 0) continue;
 
       const avgVD = rows.reduce((a, r) => a + r.vulnerabilityDensity, 0) / rows.length;
       const avgDuration = rows.reduce((a, r) => a + r.durationMs, 0) / rows.length;
       const avgCritical = rows.reduce((a, r) => a + r.criticalFindings, 0) / rows.length;
+      const avgWarning = rows.reduce((a, r) => a + r.warningFindings, 0) / rows.length;
+      const avgTotalFindings = rows.reduce((a, r) => a + r.totalFindings, 0) / rows.length;
       const approvalRate = rows.filter(r => r.approved).length / rows.length;
+      const reviewRequiredRate = rows.filter(r => r.reviewRequired).length / rows.length;
+      const toolErrorSessions = rows.filter(r => r.validationToolErrors > 0).length;
       const devRows = rows.filter(r => typeof r.developmentTimeMs === 'number');
       const avgDevTime = devRows.length > 0
         ? devRows.reduce((a, r) => a + r.developmentTimeMs, 0) / devRows.length
@@ -180,7 +235,11 @@ class ProvenanceLogger {
         avgVulnerabilityDensity: parseFloat(avgVD.toFixed(4)),
         avgDurationMs: parseFloat(avgDuration.toFixed(0)),
         avgCriticalFindings: parseFloat(avgCritical.toFixed(2)),
+        avgWarningFindings: parseFloat(avgWarning.toFixed(2)),
+        avgTotalFindings: parseFloat(avgTotalFindings.toFixed(2)),
         approvalRate: parseFloat((approvalRate * 100).toFixed(1)),
+        reviewRequiredRate: parseFloat((reviewRequiredRate * 100).toFixed(1)),
+        toolErrorSessions,
         avgDevelopmentTimeMs: avgDevTime === null ? null : parseFloat(avgDevTime.toFixed(0)),
         avgTestPassRate: avgTestPassRate === null ? null : parseFloat(avgTestPassRate.toFixed(2)),
       };

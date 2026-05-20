@@ -2,7 +2,6 @@
  * VibeGuard default configuration
  * All sensitive values (API keys) must be provided via .env
  */
-const os = require('os');
 const path = require('path');
 
 module.exports = {
@@ -31,7 +30,7 @@ module.exports = {
     semgrepEnabled: process.env.VG_SEMGREP_ENABLED !== 'false',
     eslintEnabled: process.env.VG_ESLINT_ENABLED !== 'false',
     semgrepRules: process.env.VG_SEMGREP_RULES || 'p/security-audit,p/javascript,p/owasp-top-ten',
-    tempDir: process.env.VG_TEMP_DIR || path.join(os.tmpdir(), 'vibeguard_scan'),
+    tempDir: process.env.VG_TEMP_DIR || path.join(process.cwd(), 'tmp', 'vibeguard_scan'),
   },
   policy: {
     maxRegenerations: parseInt(process.env.VG_MAX_REGEN || '3', 10),

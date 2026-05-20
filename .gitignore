@@ -2,6 +2,9 @@ node_modules
 dist
 build
 coverage
+tmp
+logs/runs/
+logs/test-results/
 .env
 .DS_Store
 .idea

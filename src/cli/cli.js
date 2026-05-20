@@ -87,6 +87,14 @@ program
         throw new Error('Use only one of --test-success or --test-failure.');
       }
 
+      const mode = String(opts.mode || 'vibeguard').toLowerCase();
+      if (!['baseline', 'vibeguard'].includes(mode)) {
+        throw new Error(`Invalid mode: ${opts.mode}. Use "vibeguard" for CLI sessions or the experiment runner for baseline evaluation.`);
+      }
+      if (mode === 'baseline') {
+        throw new Error('Baseline mode is reserved for controlled experiments. Use node src/experiment/runner.js to run baseline vs VibeGuard comparisons.');
+      }
+
       const testSuccessFlag = opts.testSuccess ? true : opts.testFailure ? false : null;
       const developmentTimeMs = parseOptionalInt(opts.devTimeMs, 'development time');
       const passed = parseOptionalInt(opts.testPassed, 'test passed');
@@ -107,7 +115,7 @@ program
 
       const result = await orchestrator.run(opts.prompt, {
         taskId: opts.taskId,
-        mode: opts.mode,
+        mode,
         postProcess: async () => ({
           developmentTimeMs,
           testResults,

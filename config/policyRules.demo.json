@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {
+      "id": "VG-WARN-DEMO-001",
+      "severity": "WARNING",
+      "description": "Demo-only rule to force WARN behavior for human-review demonstrations.",
+      "pattern": "\\btoken\\b",
+      "flags": "i",
+      "message": "Demo WARN: review token handling before use."
+    },
+    {
+      "id": "VG-DEMO-REGEN-001",
+      "severity": "ERROR",
+      "description": "Demo-only rule to force regeneration for visibility.",
+      "pattern": "\\bexpress\\s*\\(",
+      "flags": "i",
+      "message": "Demo rule triggered to force regenerate and review flow."
+    }
+  ]
+}
