@@ -207,7 +207,9 @@ class ValidationEngine {
       };
     }
 
-    const stderr = typeof err.stderr === 'string' ? err.stderr.trim() : '';
+    const stderr = Buffer.isBuffer(err.stderr)
+      ? err.stderr.toString('utf8').trim()
+      : (typeof err.stderr === 'string' ? err.stderr.trim() : '');
     return {
       tool,
       message: stderr || err.message || `${tool} failed to run.`,

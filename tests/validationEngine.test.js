@@ -40,4 +40,33 @@ describe('ValidationEngine', () => {
     expect(result.findings.some(f => f.ruleId === 'security/detect-object-injection')).toBe(true);
     expect(execFileSyncMock.mock.calls[0][1].some(arg => arg.endsWith('eslint.validation.config.js'))).toBe(true);
   });
+
+  test('surfaces stderr-only ESLint failures as policy-blocking tool errors', async () => {
+    jest.resetModules();
+    const error = new Error('Command failed: eslint');
+    error.stderr = Buffer.from('Parsing error: Unexpected token ```');
+    execFileSyncMock = jest.fn(() => {
+      throw error;
+    });
+    jest.doMock('child_process', () => ({ execFileSync: execFileSyncMock }));
+
+    const validator = require('../src/validator/validationEngine');
+    const { PolicyEngine, DECISIONS } = require('../src/policy/policyEngine');
+
+    const validation = await validator.validate('```javascript\nconst x = 1;\n```');
+    const decision = PolicyEngine.evaluate(validation.findings, 0, 'const x = 1;', {
+      toolErrors: validation.toolErrors,
+    });
+
+    expect(validation.findings).toHaveLength(0);
+    expect(validation.toolsRun).not.toContain('eslint-security');
+    expect(validation.toolErrors).toEqual([
+      {
+        tool: 'eslint-security',
+        message: 'Parsing error: Unexpected token ```',
+      },
+    ]);
+    expect(decision.decision).toBe(DECISIONS.WARN);
+    expect(decision.toolErrors).toHaveLength(1);
+  });
 });
