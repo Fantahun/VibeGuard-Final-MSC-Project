@@ -78,11 +78,17 @@ SECURITY REQUIREMENTS (Authentication):
 - Use signed JWTs with a minimum 256-bit secret; set short expiry (<=1 hour for access tokens).
 - Never expose JWT secrets or API keys as hardcoded strings; read from environment variables only.
 - Implement refresh-token rotation.
+- Persist refresh tokens or token revocation state server-side; refresh and logout handlers must query or update this store.
+- Do not treat JWT verification alone as logout; logout must revoke, delete, or invalidate the refresh token.
+- On login, persist a server-side refresh token record or token hash before returning the refresh token.
+- On refresh, verify the JWT signature and check server-side refresh token state before issuing a new access token.
+- For authentication endpoint tasks, export an express.Router(), not an Express app instance, and explicitly wire POST /auth/register, POST /auth/login, POST /auth/refresh, and POST /auth/logout when those endpoints are requested.
 - Reject unauthenticated requests at the middleware level before business logic executes.
 `,
   database_access: `
 SECURITY REQUIREMENTS (Database Access):
 - Always use parameterized queries or ORM prepared statements. Never concatenate user input into SQL strings.
+- Use a real database client such as pg Pool or accept a Pool/client dependency; never call .query() on a process.env value.
 - Validate and sanitize all input before database interaction.
 - Apply the principle of least privilege for database credentials.
 - Handle database errors without exposing schema details in error messages.
@@ -128,10 +134,10 @@ SECURITY REQUIREMENTS (Cryptography):
   general: `
 GENERAL SECURITY REQUIREMENTS (Node.js Microservices):
 - Use environment variables for all secrets and configuration; never hardcode.
-- Add helmet.js middleware for HTTP security headers.
+- Add helmet.js middleware for HTTP security headers and apply it with router.use() or app.use(); do not only import it.
 - Implement proper error handling that does not expose stack traces or internal details.
 - Apply the principle of least privilege at every layer.
-- Log security-relevant events (failed auth, rejected inputs) to a structured logger, not console.log.
+- Log security-relevant events (failed auth, rejected inputs) to a structured logger such as winston or pino; do not use console.log, console.error, console.warn, or console.info.
 - Return appropriate HTTP status codes; do not return 200 for errors.
 `,
 };

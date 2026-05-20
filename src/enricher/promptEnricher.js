@@ -51,7 +51,8 @@ TASK:
 ${originalPrompt}
 
 ADDITIONAL NODE.JS MICROSERVICE REQUIREMENTS:
-- Export a proper Express Router or class module; do not start an HTTP server inline.
+- Export a proper Express Router or class module; do not create an Express app instance or start an HTTP server inline.
+- If the task names routes or endpoints, wire those routes explicitly in the exported router/module.
 - Wrap async handlers in try/catch; forward errors to Express error middleware.
 - Do not log passwords, tokens, or full request bodies.
 - Use structured error responses: { error: string, code: string }.

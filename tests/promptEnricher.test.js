@@ -18,6 +18,11 @@ describe('PromptEnricher', () => {
     expect(result.userPrompt).toContain('SECURITY REQUIREMENTS');
     expect(result.userPrompt).toContain('bcrypt');
     expect(result.userPrompt).toContain('JWT');
+    expect(result.userPrompt).toContain('express.Router()');
+    expect(result.userPrompt).toContain('POST /auth/login');
+    expect(result.userPrompt).toContain('revocation state');
+    expect(result.userPrompt).toContain('persist a server-side refresh token record');
+    expect(result.userPrompt).toContain('not an Express app instance');
   });
 
   test('enriches database prompt with SQL injection guidance', () => {

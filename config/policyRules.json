@@ -71,6 +71,30 @@
       "pattern": "\\b(SELECT|INSERT|UPDATE|DELETE)\\b[^;]*\\+",
       "flags": "i",
       "message": "Avoid SQL string concatenation. Use parameterized queries."
+    },
+    {
+      "id": "VG-POL-010",
+      "severity": "ERROR",
+      "description": "Disallow console logging in generated code.",
+      "pattern": "\\bconsole\\.(log|error|warn|info|debug)\\s*\\(",
+      "flags": "i",
+      "message": "Console logging is forbidden in generated code. Use a structured logger."
+    },
+    {
+      "id": "VG-POL-011",
+      "severity": "ERROR",
+      "description": "Disallow inline Express app creation in generated microservice modules.",
+      "pattern": "\\bconst\\s+app\\s*=\\s*express\\s*\\(",
+      "flags": "i",
+      "message": "Generated modules must export a router or class module, not create an Express app instance inline."
+    },
+    {
+      "id": "VG-POL-012",
+      "severity": "ERROR",
+      "description": "Disallow treating environment variables as database clients.",
+      "pattern": "\\bconst\\s+(\\w+)\\s*=\\s*process\\.env\\.[A-Z0-9_]+[\\s\\S]*?\\b\\1\\.query\\s*\\(",
+      "flags": "i",
+      "message": "Do not call .query() on a process.env value. Use a real pg Pool/client configured from environment variables."
     }
   ]
 }

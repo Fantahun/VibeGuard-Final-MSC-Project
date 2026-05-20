@@ -61,6 +61,27 @@ describe('PolicyEngine', () => {
     expect(result.decision).toBe(DECISIONS.REGENERATE);
   });
 
+  test('console logging triggers REGENERATE', () => {
+    const code = "try { work(); } catch (err) { console.error(err); }";
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.decision).toBe(DECISIONS.REGENERATE);
+    expect(result.policyFindings.some(f => f.ruleId === 'VG-POL-010')).toBe(true);
+  });
+
+  test('inline Express app creation triggers REGENERATE', () => {
+    const code = "const express = require('express'); const app = express(); module.exports = app;";
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.decision).toBe(DECISIONS.REGENERATE);
+    expect(result.policyFindings.some(f => f.ruleId === 'VG-POL-011')).toBe(true);
+  });
+
+  test('querying an environment variable as a database client triggers REGENERATE', () => {
+    const code = "const dbCredentials = process.env.DATABASE_CREDENTIALS; dbCredentials.query('SELECT 1');";
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.decision).toBe(DECISIONS.REGENERATE);
+    expect(result.policyFindings.some(f => f.ruleId === 'VG-POL-012')).toBe(true);
+  });
+
   test('validation tool errors trigger WARN instead of silent acceptance', () => {
     const result = PolicyEngine.evaluate([], 0, 'const x = 1;', {
       toolErrors: [{ tool: 'semgrep', message: 'semgrep is enabled but was not found on PATH.' }],
