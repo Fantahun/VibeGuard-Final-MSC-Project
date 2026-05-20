@@ -8,6 +8,7 @@ const OpenAI = require('openai');
 const Anthropic = require('@anthropic-ai/sdk');
 const axios = require('axios');
 const config = require('../../config/default');
+const responseParser = require('./responseParser');
 
 class LLMConnector {
   constructor() {
@@ -73,10 +74,13 @@ class LLMConnector {
     });
 
     const choice = response.choices[0];
-    const code = choice.message.content.trim();
+    const rawCode = choice.message.content.trim();
+    const parsed = responseParser.normalize(rawCode);
 
     return {
-      code,
+      code: parsed.code,
+      rawCode,
+      responseNormalization: parsed.metadata,
       model: cfg.model,
       provider: 'openai',
       promptTokens: response.usage.prompt_tokens,
@@ -98,10 +102,13 @@ class LLMConnector {
       ],
     });
 
-    const code = message.content[0].text.trim();
+    const rawCode = message.content[0].text.trim();
+    const parsed = responseParser.normalize(rawCode);
 
     return {
-      code,
+      code: parsed.code,
+      rawCode,
+      responseNormalization: parsed.metadata,
       model: cfg.model,
       provider: 'anthropic',
       promptTokens: message.usage.input_tokens,
@@ -127,10 +134,13 @@ class LLMConnector {
       },
     });
 
-    const code = response.data?.message?.content?.trim() || '';
+    const rawCode = response.data?.message?.content?.trim() || '';
+    const parsed = responseParser.normalize(rawCode);
 
     return {
-      code,
+      code: parsed.code,
+      rawCode,
+      responseNormalization: parsed.metadata,
       model: cfg.model,
       provider: 'ollama',
       promptTokens: response.data?.prompt_eval_count || null,

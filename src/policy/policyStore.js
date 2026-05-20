@@ -10,19 +10,36 @@ const config = require('../../config/default');
 class PolicyStore {
   constructor() {
     this._rules = null;
+    this._rulePathKey = null;
   }
 
   _loadRules() {
-    if (this._rules) return this._rules;
-    const rulePath = path.resolve(config.policy.ruleStorePath);
-    if (!fs.existsSync(rulePath)) {
+    const rulePathKey = config.policy.ruleStorePath;
+    if (this._rules && this._rulePathKey === rulePathKey) return this._rules;
+
+    const rulePaths = String(rulePathKey || '')
+      .split(',')
+      .map(p => p.trim())
+      .filter(Boolean);
+
+    if (rulePaths.length === 0) {
       this._rules = [];
+      this._rulePathKey = rulePathKey;
       return this._rules;
     }
 
-    const raw = fs.readFileSync(rulePath, 'utf8');
-    const parsed = JSON.parse(raw);
-    this._rules = Array.isArray(parsed.rules) ? parsed.rules : [];
+    this._rules = [];
+    for (const rulePath of rulePaths) {
+      const resolvedPath = path.resolve(rulePath);
+      if (!fs.existsSync(resolvedPath)) continue;
+
+      const raw = fs.readFileSync(resolvedPath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.rules)) {
+        this._rules.push(...parsed.rules);
+      }
+    }
+    this._rulePathKey = rulePathKey;
     return this._rules;
   }
 

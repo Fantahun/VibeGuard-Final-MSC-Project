@@ -23,11 +23,13 @@ class PolicyEngine {
    * @param {object[]} findings    - normalized findings from ValidationEngine
    * @param {number}   attempt     - current regeneration attempt count
    * @param {string}   code        - generated code for policy checks
+   * @param {object}   options     - { toolErrors }
    * @returns {object} decision record
    */
-  evaluate(findings, attempt = 0, code = '') {
+  evaluate(findings, attempt = 0, code = '', options = {}) {
     const policyFindings = policyStore.evaluate(code);
     const combined = [...findings, ...policyFindings];
+    const toolErrors = Array.isArray(options.toolErrors) ? options.toolErrors : [];
     const critical = combined.filter(f => config.policy.criticalSeverities.includes(f.severity));
     const warnings = combined.filter(f => config.policy.warnSeverities.includes(f.severity));
 
@@ -45,6 +47,7 @@ class PolicyEngine {
         blockers: blockers.map(this._summarize),
         warnings: warnings.map(this._summarize),
         policyFindings: policyFindings.map(this._summarize),
+        toolErrors,
         attempt,
       };
     }
@@ -58,6 +61,19 @@ class PolicyEngine {
         blockers: blockers.map(this._summarize),
         warnings: warnings.map(this._summarize),
         policyFindings: policyFindings.map(this._summarize),
+        toolErrors,
+        attempt,
+      };
+    }
+
+    if (toolErrors.length > 0) {
+      return {
+        decision: DECISIONS.WARN,
+        reason: `${toolErrors.length} validation tool error(s) occurred. Developer review required before use.`,
+        blockers: [],
+        warnings: warnings.map(this._summarize),
+        policyFindings: policyFindings.map(this._summarize),
+        toolErrors,
         attempt,
       };
     }
@@ -69,6 +85,7 @@ class PolicyEngine {
         blockers: [],
         warnings: warnings.map(this._summarize),
         policyFindings: policyFindings.map(this._summarize),
+        toolErrors,
         attempt,
       };
     }
@@ -79,6 +96,7 @@ class PolicyEngine {
       blockers: [],
       warnings: [],
       policyFindings: policyFindings.map(this._summarize),
+      toolErrors,
       attempt,
     };
   }
@@ -122,6 +140,13 @@ class PolicyEngine {
       lines.push('\nWarnings:');
       decision.warnings.forEach(w => {
         lines.push(`  [${w.severity}] ${w.ruleId} — ${w.message} (line ${w.line || '?'})`);
+      });
+    }
+
+    if (decision.toolErrors && decision.toolErrors.length > 0) {
+      lines.push('\nValidation Tool Errors:');
+      decision.toolErrors.forEach(e => {
+        lines.push(`  [${e.tool}] ${e.message}`);
       });
     }
 

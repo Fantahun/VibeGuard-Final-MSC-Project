@@ -60,4 +60,18 @@ describe('PolicyEngine', () => {
     const result = PolicyEngine.evaluate([], 0, code);
     expect(result.decision).toBe(DECISIONS.REGENERATE);
   });
+
+  test('validation tool errors trigger WARN instead of silent acceptance', () => {
+    const result = PolicyEngine.evaluate([], 0, 'const x = 1;', {
+      toolErrors: [{ tool: 'semgrep', message: 'semgrep is enabled but was not found on PATH.' }],
+    });
+    expect(result.decision).toBe(DECISIONS.WARN);
+    expect(result.toolErrors).toHaveLength(1);
+  });
+
+  test('formal policy does not include demo-only WARN rule by default', () => {
+    const code = 'const token = process.env.JWT_SECRET;';
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.policyFindings.some(f => f.ruleId === 'VG-WARN-DEMO-001')).toBe(false);
+  });
 });

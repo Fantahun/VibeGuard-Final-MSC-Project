@@ -2,19 +2,21 @@
 const path = require('path');
 const fs = require('fs');
 
-// Use a temp log dir for tests
-process.env.VG_LOG_DIR = '/tmp/vg_test_logs';
-process.env.VG_PROVENANCE_FILE = '/tmp/vg_test_logs/provenance.jsonl';
-process.env.VG_METRICS_FILE = '/tmp/vg_test_logs/metrics.jsonl';
-
-const logger = require('../src/logger/provenanceLogger');
+let logger;
 
 beforeEach(() => {
-  fs.mkdirSync('/tmp/vg_test_logs', { recursive: true });
-  // Clean log files before each test
-  [process.env.VG_PROVENANCE_FILE, process.env.VG_METRICS_FILE].forEach(f => {
-    if (fs.existsSync(f)) fs.unlinkSync(f);
-  });
+  jest.resetModules();
+  const tempDir = path.join(
+    process.cwd(),
+    'tmp',
+    'vg_test_logs',
+    `${Date.now()}_${Math.random().toString(16).slice(2)}`
+  );
+  process.env.VG_LOG_DIR = tempDir;
+  process.env.VG_PROVENANCE_FILE = path.join(tempDir, 'provenance.jsonl');
+  process.env.VG_METRICS_FILE = path.join(tempDir, 'metrics.jsonl');
+  fs.mkdirSync(tempDir, { recursive: true });
+  logger = require('../src/logger/provenanceLogger');
 });
 
 describe('ProvenanceLogger', () => {
@@ -52,6 +54,31 @@ describe('ProvenanceLogger', () => {
     expect(metrics[0].warningFindings).toBe(1);
     expect(metrics[0].developmentTimeMs).toBe(2500);
     expect(metrics[0].testPassRate).toBe(80.00);
+  });
+
+  test('metrics include policy findings separately from validation findings', () => {
+    const session = logger.startSession('T4', 'vibeguard');
+    session.generatedCode = 'const token = process.env.JWT_SECRET;';
+    session.validationFindings = [];
+    session.policyFindings = [
+      { tool: 'policy', ruleId: 'VG-POL-X', severity: 'WARNING', message: 'Review token handling.' },
+    ];
+    session.policyDecision = 'WARN';
+    session.policyReason = 'Policy warning requires review.';
+    logger.commit(session);
+
+    const metrics = logger.loadMetrics();
+    expect(metrics[0].policyFindings).toBe(1);
+    expect(metrics[0].warningFindings).toBe(1);
+    expect(metrics[0].totalFindings).toBe(1);
+    expect(metrics[0].reviewRequired).toBe(true);
+  });
+
+  test('logReview writes a review metrics event', () => {
+    logger.logReview('S_REVIEW', true, 'Approved for thesis demo.');
+    const metrics = logger.loadMetrics();
+    expect(metrics[0].type).toBe('review');
+    expect(metrics[0].reviewApproved).toBe(true);
   });
 
   test('generateSummary returns per-mode aggregates', () => {

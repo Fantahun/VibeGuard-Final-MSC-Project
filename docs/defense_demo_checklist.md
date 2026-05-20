@@ -26,7 +26,11 @@ Expected:
 Goal: show the human-in-the-loop gate.
 
 Prereq:
-- Keep the demo warning rule in [config/policyRules.json](config/policyRules.json): `VG-WARN-DEMO-001`.
+- Use the demo policy profile for this terminal session:
+
+```bash
+set VG_POLICY_RULES=./config/policyRules.json,./config/policyRules.demo.json
+```
 
 Command:
 ```bash
@@ -70,8 +74,8 @@ Expected:
 - Summary with vulnerability density, critical findings, duration, approval rate.
 
 ## Optional Cleanup
-- Remove the demo WARN rule after the defense if desired.
+- Clear `VG_POLICY_RULES` or set it back to `./config/policyRules.json` before formal Chapter 5 runs.
 
 ## Notes
-- Sessions and decisions are logged in [logs/provenance.jsonl](logs/provenance.jsonl).
-- Metrics are logged in [logs/metrics.jsonl](logs/metrics.jsonl).
+- Single CLI demo sessions are logged in [logs/provenance.jsonl](logs/provenance.jsonl) and [logs/metrics.jsonl](logs/metrics.jsonl).
+- Formal experiment batches are logged under `logs/runs/<run-id>/`.
