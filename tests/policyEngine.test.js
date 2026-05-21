@@ -82,6 +82,13 @@ describe('PolicyEngine', () => {
     expect(result.policyFindings.some(f => f.ruleId === 'VG-POL-012')).toBe(true);
   });
 
+  test('logging token values with structured logger triggers REGENERATE', () => {
+    const code = "logger.info(`refresh token ${refreshToken}`);";
+    const result = PolicyEngine.evaluate([], 0, code);
+    expect(result.decision).toBe(DECISIONS.REGENERATE);
+    expect(result.policyFindings.some(f => f.ruleId === 'VG-POL-013')).toBe(true);
+  });
+
   test('validation tool errors trigger WARN instead of silent acceptance', () => {
     const result = PolicyEngine.evaluate([], 0, 'const x = 1;', {
       toolErrors: [{ tool: 'semgrep', message: 'semgrep is enabled but was not found on PATH.' }],

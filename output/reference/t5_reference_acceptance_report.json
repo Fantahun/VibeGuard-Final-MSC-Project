@@ -1,0 +1,65 @@
+{
+  "artifact": "E:\\Development Projects\\2026\\MY-MSC-AAU-Solution-prototype\\VibeGuard-Final-MSC-Project\\output\\reference\\t5_order_event_producer_reference.js",
+  "summary": {
+    "passed": 11,
+    "failed": 0,
+    "total": 11
+  },
+  "results": [
+    {
+      "id": "MQ-1 Uses amqplib and reads AMQP_URL from env",
+      "status": "PASS",
+      "detail": "AMQP client setup is env-based."
+    },
+    {
+      "id": "MQ-2 Asserts durable order_events queue",
+      "status": "PASS",
+      "detail": "Durable queue assertion present."
+    },
+    {
+      "id": "API-1 Defines publishOrderEvent(orderId,eventType,payload)",
+      "status": "PASS",
+      "detail": "publishOrderEvent function signature present."
+    },
+    {
+      "id": "VAL-1 Validates positive integer orderId and non-empty eventType",
+      "status": "PASS",
+      "detail": "Validation checks are explicit."
+    },
+    {
+      "id": "MSG-1 Serializes payload JSON with timestamp + correlationId",
+      "status": "PASS",
+      "detail": "Message envelope includes required metadata."
+    },
+    {
+      "id": "MSG-2 Publishes with deliveryMode: 2",
+      "status": "PASS",
+      "detail": "Explicit deliveryMode:2 present."
+    },
+    {
+      "id": "LOG-1 Logs only orderId and eventType (no full payload)",
+      "status": "PASS",
+      "detail": "Logging excludes payload and includes order/event fields."
+    },
+    {
+      "id": "REL-1 Retries connection errors up to 5 with exponential backoff",
+      "status": "PASS",
+      "detail": "Retry/backoff behavior is explicit."
+    },
+    {
+      "id": "REL-2 Clean connection close on SIGTERM",
+      "status": "PASS",
+      "detail": "SIGTERM cleanup path closes channel/connection."
+    },
+    {
+      "id": "EXP-1 Main module export is publishOrderEvent",
+      "status": "PASS",
+      "detail": "Main export is publishOrderEvent."
+    },
+    {
+      "id": "GATE-1 VibeGuard validation+policy result",
+      "status": "PASS",
+      "detail": "Validation findings: 0 and policy decision: ACCEPT."
+    }
+  ]
+}

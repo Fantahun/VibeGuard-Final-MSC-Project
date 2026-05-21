@@ -1,0 +1,21 @@
+{
+  "artifact": "E:\\Development Projects\\2026\\MY-MSC-AAU-Solution-prototype\\VibeGuard-Final-MSC-Project\\output\\reference\\t5_order_event_producer_reference.js",
+  "validation": {
+    "findingCount": 0,
+    "findings": [],
+    "toolsRun": [
+      "semgrep",
+      "eslint-security"
+    ],
+    "toolErrors": [],
+    "durationMs": 11711
+  },
+  "policy": {
+    "decision": "ACCEPT",
+    "reason": "No policy violations detected. Code approved.",
+    "blockers": [],
+    "warnings": [],
+    "policyFindings": [],
+    "toolErrors": []
+  }
+}

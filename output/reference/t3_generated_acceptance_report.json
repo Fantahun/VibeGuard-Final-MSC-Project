@@ -1,0 +1,54 @@
+{
+  "sessionId": "3be54182-d5b2-45c3-921d-6c9fbe168113",
+  "taskId": "T3_MW_RECHECK",
+  "model": "ollama/llama3.2:3b",
+  "policyDecision": "WARN",
+  "regenerationCount": 1,
+  "summary": {
+    "passed": 3,
+    "failed": 5,
+    "total": 8
+  },
+  "results": [
+    {
+      "id": "EXP-1 Export all middleware from single index",
+      "status": "FAIL",
+      "detail": "Missing consolidated export of all required middleware."
+    },
+    {
+      "id": "SAN-1 inputSanitizer strips tags and null bytes on body/params/query",
+      "status": "FAIL",
+      "detail": "Sanitizer is missing one or more required surfaces/transformations."
+    },
+    {
+      "id": "RL-1 rateLimiter is 100 requests/15min with 429",
+      "status": "FAIL",
+      "detail": "Rate limiter config does not clearly match requirement."
+    },
+    {
+      "id": "JWT-1 jwtAuthMiddleware validates bearer token with env secret",
+      "status": "PASS",
+      "detail": "JWT middleware appears compliant."
+    },
+    {
+      "id": "LOG-1 requestLogger logs method/path/status/time and avoids body/auth header",
+      "status": "PASS",
+      "detail": "Request logger appears compliant."
+    },
+    {
+      "id": "ERR-1 errorHandler returns {error,code} and hides stack in production",
+      "status": "FAIL",
+      "detail": "Error handler requirement is partially missing."
+    },
+    {
+      "id": "GATE-1 Tightened policy gate result",
+      "status": "FAIL",
+      "detail": "Policy decision was WARN."
+    },
+    {
+      "id": "GATE-2 Static validators",
+      "status": "PASS",
+      "detail": "Semgrep/ESLint findings: 0."
+    }
+  ]
+}

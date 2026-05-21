@@ -1,0 +1,90 @@
+{
+  "artifact": "E:\\Development Projects\\2026\\MY-MSC-AAU-Solution-prototype\\VibeGuard-Final-MSC-Project\\output\\reference\\t1_auth_router_reference.js",
+  "summary": {
+    "passed": 16,
+    "failed": 0,
+    "total": 16
+  },
+  "results": [
+    {
+      "id": "ARCH-1 Export router module (no inline app)",
+      "status": "PASS",
+      "detail": "Module exports an Express router and does not instantiate app/listen."
+    },
+    {
+      "id": "ROUTE-1 POST /auth/register implemented",
+      "status": "PASS",
+      "detail": "Register route exists and is wired."
+    },
+    {
+      "id": "ROUTE-2 POST /auth/login implemented",
+      "status": "PASS",
+      "detail": "Login route exists and is wired."
+    },
+    {
+      "id": "ROUTE-3 POST /auth/refresh implemented",
+      "status": "PASS",
+      "detail": "Refresh route exists and is wired."
+    },
+    {
+      "id": "ROUTE-4 POST /auth/logout implemented",
+      "status": "PASS",
+      "detail": "Logout route exists and is wired."
+    },
+    {
+      "id": "VAL-1 express-validator request validation",
+      "status": "PASS",
+      "detail": "body() validators and validationResult() are used for register/login/refresh/logout."
+    },
+    {
+      "id": "REG-1 Password hashed with bcrypt 12 rounds",
+      "status": "PASS",
+      "detail": "Register flow uses bcrypt.hash(password, 12)."
+    },
+    {
+      "id": "DB-1 User storage in PostgreSQL via parameterized query",
+      "status": "PASS",
+      "detail": "Register uses pg Pool with INSERT values bound by placeholders."
+    },
+    {
+      "id": "RESP-1 Register returns 201 on success",
+      "status": "PASS",
+      "detail": "Register response returns HTTP 201 with created user fields."
+    },
+    {
+      "id": "LOGIN-1 Credential verification with bcrypt.compare",
+      "status": "PASS",
+      "detail": "Login queries user by email and verifies password hash using bcrypt.compare."
+    },
+    {
+      "id": "JWT-1 Signed access token (1h) and refresh token (7d)",
+      "status": "PASS",
+      "detail": "Login issues access+refresh JWTs with HS256 and 3600/604800 second expiries."
+    },
+    {
+      "id": "REF-1 Refresh endpoint verifies token and issues new access token",
+      "status": "PASS",
+      "detail": "Refresh verifies JWT, checks revocation/expiry in DB, and returns a new access token."
+    },
+    {
+      "id": "LOGOUT-1 Logout invalidates refresh token",
+      "status": "PASS",
+      "detail": "Logout hashes refresh value and sets revoked_at in refresh_tokens table."
+    },
+    {
+      "id": "CFG-1 JWT and DB configuration sourced from environment",
+      "status": "PASS",
+      "detail": "JWT secret and pg Pool credentials are read from process.env only."
+    },
+    {
+      "id": "ERR-1 Structured JSON errors with HTTP status",
+      "status": "PASS",
+      "detail": "Error responses use { error, code } and route-appropriate status codes."
+    },
+    {
+      "id": "GATE-1 VibeGuard validation + policy result",
+      "status": "PASS",
+      "detail": "Validation findings: 0, policy decision: ACCEPT."
+    }
+  ]
+}

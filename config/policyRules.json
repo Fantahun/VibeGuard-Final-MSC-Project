@@ -95,6 +95,14 @@
       "pattern": "\\bconst\\s+(\\w+)\\s*=\\s*process\\.env\\.[A-Z0-9_]+[\\s\\S]*?\\b\\1\\.query\\s*\\(",
       "flags": "i",
       "message": "Do not call .query() on a process.env value. Use a real pg Pool/client configured from environment variables."
+    },
+    {
+      "id": "VG-POL-013",
+      "severity": "ERROR",
+      "description": "Disallow logging sensitive token/password data with structured loggers.",
+      "pattern": "\\b(logger|winston|pino)\\.(trace|debug|info|warn|error|fatal)\\s*\\([^)]*(token|password|secret)[^)]*\\)",
+      "flags": "i",
+      "message": "Do not log tokens, passwords, or secrets; sanitize or remove sensitive values from logs."
     }
   ]
 }

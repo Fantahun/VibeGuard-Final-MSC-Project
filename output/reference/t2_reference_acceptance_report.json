@@ -1,0 +1,75 @@
+{
+  "artifact": "E:\\Development Projects\\2026\\MY-MSC-AAU-Solution-prototype\\VibeGuard-Final-MSC-Project\\output\\reference\\t2_customer_router_reference.js",
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "total": 13
+  },
+  "results": [
+    {
+      "id": "ARCH-1 Export router/class module (no inline app)",
+      "status": "PASS",
+      "detail": "Exports router without inline app."
+    },
+    {
+      "id": "ROUTE GET /customers list route",
+      "status": "PASS",
+      "detail": "Route implemented."
+    },
+    {
+      "id": "ROUTE GET /customers/:id route",
+      "status": "PASS",
+      "detail": "Route implemented."
+    },
+    {
+      "id": "ROUTE POST /customers route",
+      "status": "PASS",
+      "detail": "Route implemented."
+    },
+    {
+      "id": "ROUTE PUT /customers/:id route",
+      "status": "PASS",
+      "detail": "Route implemented."
+    },
+    {
+      "id": "ROUTE DELETE /customers/:id route",
+      "status": "PASS",
+      "detail": "Route implemented."
+    },
+    {
+      "id": "LIST-1 Pagination (page, limit) implemented",
+      "status": "PASS",
+      "detail": "Pagination schema and SQL LIMIT/OFFSET detected."
+    },
+    {
+      "id": "DB-1 Parameterized pg queries used",
+      "status": "PASS",
+      "detail": "Parameterized queries present with no SQL string concatenation pattern."
+    },
+    {
+      "id": "VAL-1 Path params validated as integers",
+      "status": "PASS",
+      "detail": "Joi integer validation wired to id routes."
+    },
+    {
+      "id": "VAL-2 Request body validated with Joi",
+      "status": "PASS",
+      "detail": "Create/update Joi validation enforced in handlers."
+    },
+    {
+      "id": "ERR-1 Internal DB errors not exposed",
+      "status": "PASS",
+      "detail": "Generic error responses are returned."
+    },
+    {
+      "id": "AUTH-1 JWT bearer middleware before mutations",
+      "status": "PASS",
+      "detail": "JWT middleware gates POST/PUT/DELETE routes."
+    },
+    {
+      "id": "DEL-1 Soft delete implemented (no purge)",
+      "status": "PASS",
+      "detail": "Soft delete updates deleted_at without hard delete."
+    }
+  ]
+}

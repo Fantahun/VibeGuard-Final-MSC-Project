@@ -1,0 +1,45 @@
+{
+  "artifact": "E:\\Development Projects\\2026\\MY-MSC-AAU-Solution-prototype\\VibeGuard-Final-MSC-Project\\output\\reference\\t3_security_middleware_reference\\index.js",
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7
+  },
+  "results": [
+    {
+      "id": "EXP-1 Export all middleware from single index.js",
+      "status": "PASS",
+      "detail": "Single entry exports all required middleware."
+    },
+    {
+      "id": "SAN-1 inputSanitizer strips HTML tags + null bytes on body/params/query",
+      "status": "PASS",
+      "detail": "Sanitizer behavior and surfaces satisfy requirement."
+    },
+    {
+      "id": "RL-1 rateLimiter 100 req / 15 min with 429",
+      "status": "PASS",
+      "detail": "Rate limiter config is compliant."
+    },
+    {
+      "id": "JWT-1 JWT bearer auth uses process.env.JWT_SECRET and sets req.user",
+      "status": "PASS",
+      "detail": "JWT middleware fully compliant."
+    },
+    {
+      "id": "LOG-1 requestLogger logs method/path/status/response-time without body/auth headers",
+      "status": "PASS",
+      "detail": "Request logger satisfies logging constraints."
+    },
+    {
+      "id": "ERR-1 errorHandler returns {error,code} and hides stack in production",
+      "status": "PASS",
+      "detail": "Global error handler requirement satisfied."
+    },
+    {
+      "id": "GATE-1 VibeGuard validation+policy result",
+      "status": "PASS",
+      "detail": "Validation findings: 0, policy decision: ACCEPT."
+    }
+  ]
+}

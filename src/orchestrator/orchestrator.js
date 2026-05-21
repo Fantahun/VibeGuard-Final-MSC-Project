@@ -99,6 +99,29 @@ class Orchestrator {
       session.policyBlockers = policyResult.blockers || [];
       session.policyWarnings = policyResult.warnings || [];
 
+      if (policyResult.decision === DECISIONS.REGENERATE) {
+        // Feed policy-derived blockers back into the corrective prompt so retries
+        // include both scanner findings and policy failures.
+        const policyFeedback = [
+          ...(policyResult.policyFindings || []),
+          ...(policyResult.blockers || []),
+          ...(policyResult.warnings || []),
+        ];
+        const unique = new Set();
+        lastFindings = [...lastFindings, ...policyFeedback].filter((finding) => {
+          const key = [
+            finding.tool || '',
+            finding.ruleId || '',
+            finding.severity || '',
+            finding.message || '',
+            finding.line || '',
+          ].join('|');
+          if (unique.has(key)) return false;
+          unique.add(key);
+          return true;
+        });
+      }
+
       if (policyResult.decision !== DECISIONS.REGENERATE) break;
     }
 

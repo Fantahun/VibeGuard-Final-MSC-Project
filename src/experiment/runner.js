@@ -19,7 +19,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 
 const config = require('../../config/default');
@@ -122,9 +122,12 @@ function createRunContext(args = cliArgs) {
   };
 }
 
-function commandVersion(command) {
+function commandVersion(command, args = ['--version']) {
   try {
-    return execSync(command, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return execFileSync(command, args, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return null;
   }
@@ -145,7 +148,7 @@ function buildEnvironmentSnapshot(runContext) {
     },
     runtime: {
       node: process.version,
-      npm: commandVersion('npm --version'),
+      npm: commandVersion('npm', ['--version']),
     },
     dependencies: {
       eslint: packageJson.dependencies?.eslint || packageJson.devDependencies?.eslint || null,
@@ -164,7 +167,7 @@ function buildEnvironmentSnapshot(runContext) {
       semgrepEnabled: config.validation.semgrepEnabled,
       eslintEnabled: config.validation.eslintEnabled,
       semgrepRules: config.validation.semgrepRules,
-      semgrepVersion: commandVersion('semgrep --version'),
+      semgrepVersion: commandVersion('semgrep', ['--version']),
     },
     policy: {
       ruleStorePath: config.policy.ruleStorePath,

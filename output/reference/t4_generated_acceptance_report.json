@@ -1,0 +1,84 @@
+{
+  "sessionId": "86a1a0cc-d955-4755-a70e-8c16829e1292",
+  "taskId": "T4_UPLOAD_RECHECK",
+  "model": "ollama/llama3.2:3b",
+  "policyDecision": "ACCEPT",
+  "regenerationCount": 1,
+  "summary": {
+    "passed": 9,
+    "failed": 5,
+    "total": 14
+  },
+  "results": [
+    {
+      "id": "ARCH-1 Export router/class module (no inline app)",
+      "status": "PASS",
+      "detail": "Router module export detected."
+    },
+    {
+      "id": "ROUTE-1 POST /files/upload exists",
+      "status": "PASS",
+      "detail": "Upload route found."
+    },
+    {
+      "id": "UP-1 multipart/form-data via multer",
+      "status": "PASS",
+      "detail": "Multer single-file upload detected."
+    },
+    {
+      "id": "UP-2 MIME allowlist (PDF/PNG/JPEG/DOCX) by MIME type",
+      "status": "FAIL",
+      "detail": "Required MIME allowlist validation missing or incomplete."
+    },
+    {
+      "id": "UP-3 Reject files larger than 5MB",
+      "status": "FAIL",
+      "detail": "5MB size enforcement missing."
+    },
+    {
+      "id": "UP-4 UUID-based stored filename (no client filename reuse)",
+      "status": "PASS",
+      "detail": "Server-generated filename pattern detected."
+    },
+    {
+      "id": "UP-5 Absolute path + containment check inside UPLOAD_DIR",
+      "status": "FAIL",
+      "detail": "Path escape/containment protection is incomplete."
+    },
+    {
+      "id": "DB-1 Store metadata in PostgreSQL using parameterized query",
+      "status": "PASS",
+      "detail": "Parameterized metadata insert appears present."
+    },
+    {
+      "id": "RESP-1 Success payload {fileId, storedName, size, mimeType}",
+      "status": "PASS",
+      "detail": "Success response shape appears compliant."
+    },
+    {
+      "id": "RESP-2 Structured error payloads with status codes",
+      "status": "PASS",
+      "detail": "Structured errors detected."
+    },
+    {
+      "id": "AUTH-1 JWT authentication required before upload",
+      "status": "FAIL",
+      "detail": "JWT middleware not clearly enforced before upload route."
+    },
+    {
+      "id": "BUILD-1 No missing module imports",
+      "status": "FAIL",
+      "detail": "Missing imports for used modules: path, fs, crypto"
+    },
+    {
+      "id": "GATE-1 Tightened policy gate result",
+      "status": "PASS",
+      "detail": "Policy decision was ACCEPT."
+    },
+    {
+      "id": "GATE-2 Static validators",
+      "status": "PASS",
+      "detail": "Semgrep/ESLint findings: 0."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "sessionId": "62d96748-a915-4396-95ed-88932f54801e",
+  "taskId": "T5_QUEUE_RECHECK",
+  "model": "ollama/llama3.2:3b",
+  "policyDecision": "ACCEPT",
+  "regenerationCount": 0,
+  "summary": {
+    "passed": 7,
+    "failed": 5,
+    "total": 12
+  },
+  "results": [
+    {
+      "id": "MQ-1 Uses amqplib and reads AMQP_URL from env",
+      "status": "PASS",
+      "detail": "amqplib and AMQP_URL usage detected."
+    },
+    {
+      "id": "MQ-2 Asserts durable order_events queue",
+      "status": "PASS",
+      "detail": "Durable queue assertion present."
+    },
+    {
+      "id": "API-1 Defines publishOrderEvent(orderId,eventType,payload)",
+      "status": "PASS",
+      "detail": "publishOrderEvent function detected."
+    },
+    {
+      "id": "VAL-1 Validates positive integer orderId and non-empty eventType",
+      "status": "FAIL",
+      "detail": "Input validation incomplete for orderId/eventType."
+    },
+    {
+      "id": "MSG-1 Serializes payload JSON with timestamp + correlationId",
+      "status": "PASS",
+      "detail": "Message envelope fields detected."
+    },
+    {
+      "id": "MSG-2 Publishes with deliveryMode: 2",
+      "status": "FAIL",
+      "detail": "Uses persistent:true but not explicit deliveryMode:2."
+    },
+    {
+      "id": "LOG-1 Logs only orderId and eventType (no payload)",
+      "status": "PASS",
+      "detail": "Logging intent appears compliant."
+    },
+    {
+      "id": "REL-1 Retries connection errors up to 5 with exponential backoff",
+      "status": "FAIL",
+      "detail": "Retry strategy up to 5 with exponential backoff is missing/incomplete."
+    },
+    {
+      "id": "REL-2 Clean close on SIGTERM",
+      "status": "FAIL",
+      "detail": "SIGTERM cleanup handling missing or incomplete."
+    },
+    {
+      "id": "EXP-1 Main module export is publishOrderEvent",
+      "status": "FAIL",
+      "detail": "Main export is not publishOrderEvent."
+    },
+    {
+      "id": "GATE-1 Tightened policy gate result",
+      "status": "PASS",
+      "detail": "Policy decision was ACCEPT."
+    },
+    {
+      "id": "GATE-2 No inline Express app instance",
+      "status": "PASS",
+      "detail": "No inline app instance found."
+    }
+  ]
+}
